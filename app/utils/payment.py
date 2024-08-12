@@ -1,3 +1,3 @@
-def generate_payment_link(wallet: str, amount: float) -> str:
+def generate_payment_link() -> str:
     # Assuming a hypothetical payment link format
-    return f"https://paymentgateway.com/pay?address={wallet}&amount={amount}"
+    return "TAWs8kcs4kH5zp9jScdYB6RUnHv8jDEnse"

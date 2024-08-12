@@ -68,16 +68,11 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
 async def logout():
     return {"message": "Successfully logged out"}
 
-@router.post("/generate_payment_link/{username}")
-async def generate_payment(username: str, amount: float):
-    if amount < 13:
-        return {"message": "The deposit must be at least $13."}
-    user = await get_user(username)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+@router.post("/generate_payment_link")
+async def generate_payment():
     
-    payment_link = generate_payment_link(user.wallet, amount)
-    qr_code_image = generate_qr_code(payment_link)
+    payment_link = generate_payment_link()
+    qr_code_image = generate_qr_code()
 
     return {
         "payment_link": payment_link,
