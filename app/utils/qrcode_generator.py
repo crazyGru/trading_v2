@@ -9,6 +9,6 @@ def generate_qr_code() -> str:
         with open('qr.png', 'rb') as f:
             img_io.write(f.read())
         img_io.seek(0)
-        return img_io.getvalue()
+        return base64.b64encode(img_io.getvalue()).decode('utf-8')
     except Exception as e:
         raise HTTPException(status_code=500, detail="Error generating QR code")
