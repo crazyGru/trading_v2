@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+motor
+pymongo
+pydantic-settings
+passlib[bcrypt]
+python-jose
+tronpy
+qrcode[pil]
