@@ -25,9 +25,9 @@ async def create_user(user: User) -> User:
             {"$addToSet": {"friend_ids": user.id}}
         )
 
-    wallet_info = create_trc20_wallet()
-    user.wallet = wallet_info['public_key']
-    user.private_key = wallet_info['private_key']
+    # wallet_info = create_trc20_wallet()
+    # user.wallet = wallet_info['public_key']
+    # user.private_key = wallet_info['private_key']
     user.transferred_amount = 0.0
     user.transaction_time = None
     user.auto_withdraw = user.auto_withdraw if user.auto_withdraw is not None else True
