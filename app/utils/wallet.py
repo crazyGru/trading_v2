@@ -19,11 +19,15 @@ async def get_wallet_balance(wallet: str) -> float:
     tron = Tron()
     try:
         balance = await tron.get_account_balance(wallet)
-        return balance / 1_000_000
-    except AddressNotFound:
-        balance = 0.0
+        
+        charge_history = await db['charge_history'].find({"from": wallet}).to_list(None)
+        withdraw_history = await db['withdraw_history'].find({"to": wallet}).to_list(None)
 
-    return balance
+        total_charged = sum(charge['amount'] for charge in charge_history)
+        total_withdrawn = sum(withdraw['amount'] for withdraw in withdraw_history)
+        return total_charged - total_withdrawn
+    except AddressNotFound:
+        return 0.0
 
 async def get_boss_wallet() -> BossWallet:
     boss_wallet = await db["boss_wallets"].find_one()

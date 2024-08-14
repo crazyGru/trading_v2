@@ -101,7 +101,7 @@ async def transfer_all_to_boss(boss_wallet: str):
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.post("/withdraw/{username}")
-async def withdraw(username: str, address: str, amount: float):
+async def withdraw(username: str, amount: float):
     try:
         user = await get_user(username)
         if user is None:
@@ -113,7 +113,7 @@ async def withdraw(username: str, address: str, amount: float):
         balance = await get_wallet_balance(user.wallet)
         if amount > balance:
             raise HTTPException(status_code=400, detail="Insufficient balance")
-        result = await withdraw_from_boss(username, db, address, amount)
+        result = await withdraw_from_boss('USDT', user.wallet_address, amount, 'TRX')
         return {"message": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
