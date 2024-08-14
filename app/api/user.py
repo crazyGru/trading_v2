@@ -16,6 +16,7 @@ from app.models.charge import Charge
 from app.models.user import User
 from app.utils.payment import generate_payment_link
 from app.utils.qrcode_generator import generate_qr_code
+from app.utils.transaction import get_transaction_info
 from app.utils.transfer import transfer_to_boss
 from app.utils.wallet import get_wallet_balance
 from app.db.database import db
@@ -41,7 +42,7 @@ async def get_charge_history(username: str):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    charge_history = await db['charge_history'].find({"user_id": user.id}).to_list(length=100)
+    charge_history = await db['charge_history'].find({"from": user.wallet_address}).to_list(length=100)
     return {"charge_history": charge_history}
 
 @router.get("/users/{username}/withdraw_history")
@@ -50,7 +51,7 @@ async def get_withdraw_history(username: str):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    withdraw_history = await db["withdrawal_history"].find({"user_id": user.id}).to_list(length=100)
+    withdraw_history = await db["withdraw_history"].find({"to": user.wallet_address}).to_list(length=100)
     return {"withdraw_history": withdraw_history}
 
 @router.post("/users", response_model=User)
@@ -198,8 +199,8 @@ async def charge_user(charge: Charge):
 api_key = 'rmXbSc9prPNN0zvdqmdqZgPlTUNXRkWhKOmuKBmoUVjkz27YbOucEucLJHJXsz3B'
 api_secret = 'lX6OFrDJsqX4or62kvg1R6ZK6EVmbXlARpsof4LGg6jIJWaOl1jnHbyno6D7l0gN'
 
-@router.get('/get_withdraw_history')
-async def get_history(coin: str = 'USDT', status: int = 1):
+@router.get('/get_charge_history')
+async def get_charge_history(coin: str = 'USDT', status: int = 1):
     try:
         server_time_url = 'https://api.binance.com/api/v3/time'
         server_time_response = requests.get(server_time_url)
@@ -222,6 +223,77 @@ async def get_history(coin: str = 'USDT', status: int = 1):
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.json())
         
-        return response.json()
+        items = response.json()
+        res = []
+        for item in items:
+            txId = item['txId']
+            txInfo = get_transaction_info(txId)
+            temp = {
+                "timestamp": txInfo["timestamp"] / 1000,
+                "from": txInfo["trc20TransferInfo"][0]["from_address"],
+                "to": txInfo["trc20TransferInfo"][0]["to_address"],
+                "amount": txInfo["trc20TransferInfo"][0]["amount_str"]
+            }
+            res.append(temp)
+
+        for record in res:
+            record['timestamp'] = datetime.fromtimestamp(record['timestamp'])
+            await db['charge_history'].update_one(
+                {"timestamp": record['timestamp'], "from": record['from']},
+                {"$set": record},
+                upsert=True
+            )
+
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get('/get_withdraw_history')
+async def get_withdraw_history(coin: str = 'USDT', status: int = 1):
+    try:
+        server_time_url = 'https://api.binance.com/api/v3/time'
+        server_time_response = requests.get(server_time_url)
+        server_time = server_time_response.json()['serverTime']
+
+        url = 'https://api.binance.com/sapi/v1/capital/withdraw/history'
+        params = {
+            'coin': coin,
+            'status': status,
+            'timestamp': server_time,
+            'recvWindow': 5000
+        }
+
+        query_string = '&'.join([f"{k}={v}" for k, v in params.items()])
+        signature = hmac.new(api_secret.encode(), query_string.encode(), hashlib.sha256).hexdigest()
+        params['signature'] = signature
+        headers = {'X-MBX-APIKEY': api_key}
+
+        response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+        
+        items = response.json()
+        res = []
+        for item in items:
+            txId = item['txId']
+            txInfo = get_transaction_info(txId)
+            temp = {
+                "timestamp": txInfo["timestamp"] / 1000,
+                "from": txInfo["trc20TransferInfo"][0]["from_address"],
+                "to": txInfo["trc20TransferInfo"][0]["to_address"],
+                "amount": txInfo["trc20TransferInfo"][0]["amount_str"]
+            }
+            res.append(temp)
+
+        for record in res:
+            record['timestamp'] = datetime.fromtimestamp(record['timestamp'])
+            await db['withdraw_history'].update_one(
+                {"timestamp": record['timestamp'], "to": record['to']},
+                {"$set": record},
+                upsert=True
+            )
+
+        return res    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
