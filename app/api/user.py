@@ -294,6 +294,6 @@ async def get_withdraw_history(coin: str = 'USDT', status: int = 1):
                 upsert=True
             )
 
-        return res    
+        return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
