@@ -11,3 +11,4 @@ class User(BaseModel):
     referral_id: Optional[int] = None
     id: int = random.randint(1000, 9999)
     auto_withdraw: bool = True
+    wallet_address: Optional[str] = None

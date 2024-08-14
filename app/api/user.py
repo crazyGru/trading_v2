@@ -1,10 +1,13 @@
 from datetime import datetime
+import hashlib
+import hmac
 import cv2
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from fastapi.responses import FileResponse
 
 from fastapi.security import OAuth2PasswordRequestForm
+import requests
 from tronpy import Tron
 from app.core.security import create_access_token, get_current_user, hash_password, verify_password
 from app.crud.boss_wallet import get_boss_wallet, save_boss_wallet
@@ -185,8 +188,40 @@ async def get_earnings_info(username: str):
 
 @router.post("/charge")
 async def charge_user(charge: Charge):
+
     charge_data = charge.dict()
     charge_data['timestamp'] = datetime.utcnow()
     await db['charge_history'].insert_one(charge_data)
 
     return {"message": "Charge recorded successfully", "charge": charge_data}
+
+api_key = 'rmXbSc9prPNN0zvdqmdqZgPlTUNXRkWhKOmuKBmoUVjkz27YbOucEucLJHJXsz3B'
+api_secret = 'lX6OFrDJsqX4or62kvg1R6ZK6EVmbXlARpsof4LGg6jIJWaOl1jnHbyno6D7l0gN'
+
+@router.get('/get_withdraw_history')
+async def get_history(coin: str = 'USDT', status: int = 1):
+    try:
+        server_time_url = 'https://api.binance.com/api/v3/time'
+        server_time_response = requests.get(server_time_url)
+        server_time = server_time_response.json()['serverTime']
+
+        url = 'https://api.binance.com/sapi/v1/capital/deposit/hisrec'
+
+        params = {
+            'coin': coin,
+            'status': status,
+            'timestamp': server_time,
+            'recvWindow': 5000
+        }
+
+        query_string = '&'.join([f"{k}={v}" for k, v in params.items()])
+        signature = hmac.new(api_secret.encode(), query_string.encode(), hashlib.sha256).hexdigest()
+        params['signature'] = signature
+        headers = {'X-MBX-APIKEY': api_key}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+        
+        return response.json()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
