@@ -80,7 +80,7 @@ async def generate_payment():
 
     return {
         "payment_link": payment_link,
-        "qr_code": f"data:image/png;base64,{qr_code_image}"
+        "qr_code": qr_code_image
     }
 
 @router.get('/users/{username}/balance')
