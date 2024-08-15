@@ -83,11 +83,20 @@ async def generate_payment():
         "qr_code": qr_code_image
     }
 
+@router.get("/invite/{username}")
+async def get_invite_code(username: str):
+    user = await get_user(username)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    invite_code = user.id
+    return {"code": invite_code}
+
 @router.get('/users/{username}/balance')
 async def check_balance(username: str):
     user = await get_user(username)
     if user is None:
-        raise HTTPException
+        raise HTTPException(status_code=404, detail="User not found")
     
     balance = await get_wallet_balance(user.wallet)
     return {"username": username, "balance": balance}
