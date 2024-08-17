@@ -127,6 +127,17 @@ async def withdraw(username: str, amount: float):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+@router.patch("/user/{username}/auto_withdraw")
+async def set_auto_withdraw(username: str, auto_withdraw: bool):
+    user = await get_user(user)
+    if user is None:
+        raise HTTPException(status_code=404, detail="user not found")
+    
+    user.auto_withdraw = auto_withdraw
+    await db['users'].update_one({'username': username}, {"$set": {"auto_withdraw": auto_withdraw}})
+    
+    return {"message": "Auto withdraw setting updated successfully", "auto_withdraw": user.auto_withdraw}
+    
 @router.post("/boss_wallet")
 async def set_boss_wallet(wallet_address: str, private_key: str):
     await save_boss_wallet(wallet_address, private_key)
