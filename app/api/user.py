@@ -26,7 +26,7 @@ from pathlib import Path
 router = APIRouter()
 
 @router.get("/users", response_model=List[User])
-async def read_users(current_user: User = Depends(get_current_user)):
+async def read_users():
     return await get_users()
 
 @router.get("/users/{username}", response_model=User)
