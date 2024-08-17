@@ -30,5 +30,10 @@ async def create_user(user: User) -> User:
     return user
 
 async def get_users() -> List[User]:
-    users = await db["users"].find().to_list(1000)
-    return [User(**user) for user in users]
+    users_data = await db["users"].find().to_list(1000)  # Fetch user data
+    return [User(username=user['username'], email=user['email'], password=user['password'],  # Explicitly map fields
+                  friend_ids=user.get('friend_ids', []), 
+                  referral_id=user.get('referral_id'), 
+                  id=user['id'], 
+                  auto_withdraw=user.get('auto_withdraw', True), 
+                  wallet_address=user.get('wallet_address')) for user in users_data]

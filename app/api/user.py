@@ -27,7 +27,10 @@ router = APIRouter()
 
 @router.get("/users", response_model=List[User])
 async def read_users():
-    return await get_users()
+    users = await get_users()
+    if not users:
+        raise HTTPException(status_code=404, detail="No users found")
+    return users
 
 @router.get("/users/{username}", response_model=User)
 async def read_user(username: str, current_user : User = Depends(get_current_user)):
