@@ -132,7 +132,7 @@ async def withdraw(username: str, amount: float):
     
 @router.patch("/user/{username}/auto_withdraw")
 async def set_auto_withdraw(username: str, auto_withdraw: bool):
-    user = await get_user(user)
+    user = await get_user(username)
     if user is None:
         raise HTTPException(status_code=404, detail="user not found")
     
