@@ -101,7 +101,7 @@ async def check_balance(username: str):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    balance = await get_wallet_balance(user.wallet)
+    balance = await get_wallet_balance(user.wallet_address)
     return {"username": username, "balance": balance}
 
 @router.post("/transfer_to_boss/{boss_wallet}")

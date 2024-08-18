@@ -18,7 +18,6 @@ def create_trc20_wallet() -> str:
 async def get_wallet_balance(wallet: str) -> float:
     tron = Tron()
     try:
-        balance = await tron.get_account_balance(wallet)
         
         charge_history = await db['charge_history'].find({"from": wallet}).to_list(None)
         withdraw_history = await db['withdraw_history'].find({"to": wallet}).to_list(None)
