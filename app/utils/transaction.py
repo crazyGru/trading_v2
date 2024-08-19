@@ -1,10 +1,10 @@
 from fastapi import HTTPException
-import requests
+from security import safe_requests
 
 
 def get_transaction_info(txid: str) -> dict:
     url = f"https://apilist.tronscan.org/api/transaction-info?hash={txid}"
-    response = requests.get(url)
+    response = safe_requests.get(url)
 
     if response.status_code == 200:
         transaction_data = response.json()
