@@ -47,6 +47,10 @@ async def get_charge_history(username: str):
         raise HTTPException(status_code=404, detail="User not found")
     
     charge_history = await db['charge_history'].find({"from": user.wallet_address}).to_list(length=100)
+
+    for record in charge_history:
+        record['_id'] = str(record['_id'])
+
     return {"charge_history": charge_history}
 
 @router.get("/users/{username}/withdraw_history")
@@ -56,16 +60,24 @@ async def get_withdraw_history(username: str):
         raise HTTPException(status_code=404, detail="User not found")
     
     withdraw_history = await db["withdraw_history"].find({"to": user.wallet_address}).to_list(length=100)
+    for record in withdraw_history:
+        record['_id'] = str(record['_id'])
+    
     return {"withdraw_history": withdraw_history}
 
-@router.get("/user/{username}/revenue_history")
+@router.get("/users/{username}/revenue_history")
 async def get_revenue_history(username: str):
     user = await get_user(username)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    revenue_history = await db['charge_history'].find({"from": user.wallet_address, "type": "revenue"}).to_list(None)
+    revenue_history = await db['charge_history'].find({"from": user.wallet_address, "type": "revenue"}).to_list(length=100)
+
+    for record in revenue_history:
+        record['_id'] = str(record['_id'])
+
     return {"revenue_history": revenue_history}
+
 
 @router.post("/users", response_model=User)
 async def create_new_user(user: User):
