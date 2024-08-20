@@ -16,6 +16,7 @@ from app.models.charge import Charge
 from app.models.user import User
 from app.utils.payment import generate_payment_link
 from app.utils.qrcode_generator import generate_qr_code
+from app.utils.reward import get_reward_amount
 from app.utils.transaction import get_transaction_info
 from app.utils.transfer import transfer_to_boss
 from app.utils.wallet import get_wallet_balance
@@ -320,3 +321,36 @@ async def get_withdraw_history(coin: str = 'USDT', status: int = 1):
         return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.get('/get_reward/{username}')
+async def get_reward(username: str):
+    user = await get_user(username)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    charge_history = await db['charge_history'].find({"from": user.wallet_address}).to_list(None)
+    withdraw_history = await db["withdraw_history"].find({"to": user.wallet_address}).to_list(None)
+    current_timestamp = datetime.utcnow()
+    last_timestamp = datetime(1900, 1, 1, 0, 0)
+    for charge in charge_history:
+        last_timestamp = max(charge['timestamp'], last_timestamp)
+    for withdraw in withdraw_history:
+        last_timestamp = max(withdraw['timestamp'], last_timestamp)
+
+    is_later_than_24hrs = (current_timestamp - last_timestamp).total_seconds() > 86400
+
+    if is_later_than_24hrs:
+        await db['charge_history'].update_one(
+            {"timestamp": current_timestamp, "from": user.wallet_address},
+            {"$set": {
+                "timestamp": current_timestamp,
+                "from": user.wallet_address,
+                "to": generate_payment_link(),
+                "amount": await get_reward_amount(user.wallet_address)
+            }},
+            upsert=True
+        )
+        return {"message": "Successfully received daily reward."}
+    else:
+        return {"message": "Not available yet. You can do this action in every 24hrs."}

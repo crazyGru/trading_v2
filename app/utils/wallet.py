@@ -16,14 +16,13 @@ def create_trc20_wallet() -> str:
     }
 
 async def get_wallet_balance(wallet: str) -> float:
-    tron = Tron()
     try:
         
         charge_history = await db['charge_history'].find({"from": wallet}).to_list(None)
         withdraw_history = await db['withdraw_history'].find({"to": wallet}).to_list(None)
 
-        total_charged = sum(charge['amount'] for charge in charge_history)
-        total_withdrawn = sum(withdraw['amount'] for withdraw in withdraw_history)
+        total_charged = sum(float(charge['amount']) for charge in charge_history)
+        total_withdrawn = sum(float(withdraw['amount']) for withdraw in withdraw_history)
         return total_charged - total_withdrawn
     except AddressNotFound:
         return 0.0
