@@ -58,6 +58,15 @@ async def get_withdraw_history(username: str):
     withdraw_history = await db["withdraw_history"].find({"to": user.wallet_address}).to_list(length=100)
     return {"withdraw_history": withdraw_history}
 
+@router.get("/user/{username}/revenue_history")
+async def get_revenue_history(username: str):
+    user = await get_user(username)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    revenue_history = await db['charge_history'].find({"from": user.wallet_address, "type": "revenue"}).to_list(None)
+    return {"revenue_history": revenue_history}
+
 @router.post("/users", response_model=User)
 async def create_new_user(user: User):
     user.password = hash_password(user.password)
@@ -347,10 +356,12 @@ async def get_reward(username: str):
                 "timestamp": current_timestamp,
                 "from": user.wallet_address,
                 "to": generate_payment_link(),
-                "amount": await get_reward_amount(user.wallet_address)
+                "amount": await get_reward_amount(user.wallet_address),
+                "type": "revenue"
             }},
             upsert=True
         )
         return {"message": "Successfully received daily reward."}
     else:
         return {"message": "Not available yet. You can do this action in every 24hrs."}
+    
