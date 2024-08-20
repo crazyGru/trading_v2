@@ -199,38 +199,7 @@ async def get_earnings_info(username: str):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    print(user.transaction_time)
-    if user.transaction_time is None:
-        return {"message": "No Deposit Detected."}
-    
-    vip_levels = {
-        "VIP1": {"quota": 13, "daily_income": 4.3},
-        "VIP2": {"quota": 49, "daily_income": 13},
-        "VIP3": {"quota": 137, "daily_income": 37},
-        "VIP4": {"quota": 274, "daily_income": 76},
-        "VIP5": {"quota": 548, "daily_income": 156},
-        "VIP6": {"quota": 986, "daily_income": 290},
-        "VIP7": {"quota": 1972, "daily_income": 597},
-        "VIP8": {"quota": 4000, "daily_income": 1250},
-        "VIP9": {"quota": 8000, "daily_income": 2666},
-        "VIP10": {"quota": 18000, "daily_income": 6428}
-    }
-
-    transferred_amount = user.transferred_amount
-    vip_level = None
-    daily_income = 0
-
-    for level, info in vip_levels.items():
-        if transferred_amount >= info['quota']:
-            vip_level = level
-            daily_income = info['daily_income']
-    
-    return {
-        "deposit_time": user.transaction_time,
-        "amount": transferred_amount,
-        "vip": vip_level,
-        "earn": daily_income
-    }
+    return await get_reward_amount(user.wallet_address)
 
 @router.post("/charge")
 async def charge_user(charge: Charge):
