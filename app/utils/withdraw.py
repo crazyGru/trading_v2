@@ -10,7 +10,7 @@ API_SECRET = 'lX6OFrDJsqX4or62kvg1R6ZK6EVmbXlARpsof4LGg6jIJWaOl1jnHbyno6D7l0gN'
 
 async def withdraw_from_boss(coin, address, amount, network=None, address_tag=None):
     server_time_url = 'https://api.binance.com/api/v3/time'
-    server_time_response = requests.get(server_time_url)
+    server_time_response = requests.get(server_time_url, timeout=60)
     server_time = server_time_response.json()['serverTime']
 
     endpoint = 'https://api.binance.com/sapi/v1/capital/withdraw/apply'
@@ -34,6 +34,6 @@ async def withdraw_from_boss(coin, address, amount, network=None, address_tag=No
     headers = {
         'X-MBX-APIKEY': API_KEY
     }
-    response = requests.post(endpoint, headers=headers, params=params)
+    response = requests.post(endpoint, headers=headers, params=params, timeout=60)
 
     return response.json()

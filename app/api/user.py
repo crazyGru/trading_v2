@@ -217,7 +217,7 @@ api_secret = 'lX6OFrDJsqX4or62kvg1R6ZK6EVmbXlARpsof4LGg6jIJWaOl1jnHbyno6D7l0gN'
 async def get_charge_history(coin: str = 'USDT', status: int = 1):
     try:
         server_time_url = 'https://api.binance.com/api/v3/time'
-        server_time_response = requests.get(server_time_url)
+        server_time_response = requests.get(server_time_url, timeout=60)
         server_time = server_time_response.json()['serverTime']
 
         url = 'https://api.binance.com/sapi/v1/capital/deposit/hisrec'
@@ -233,7 +233,7 @@ async def get_charge_history(coin: str = 'USDT', status: int = 1):
         signature = hmac.new(api_secret.encode(), query_string.encode(), hashlib.sha256).hexdigest()
         params['signature'] = signature
         headers = {'X-MBX-APIKEY': api_key}
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=headers, params=params, timeout=60)
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.json())
         
@@ -266,7 +266,7 @@ async def get_charge_history(coin: str = 'USDT', status: int = 1):
 async def get_withdraw_history(coin: str = 'USDT', status: int = 1):
     try:
         server_time_url = 'https://api.binance.com/api/v3/time'
-        server_time_response = requests.get(server_time_url)
+        server_time_response = requests.get(server_time_url, timeout=60)
         server_time = server_time_response.json()['serverTime']
 
         url = 'https://api.binance.com/sapi/v1/capital/withdraw/history'
@@ -282,7 +282,7 @@ async def get_withdraw_history(coin: str = 'USDT', status: int = 1):
         params['signature'] = signature
         headers = {'X-MBX-APIKEY': api_key}
 
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=headers, params=params, timeout=60)
 
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.json())

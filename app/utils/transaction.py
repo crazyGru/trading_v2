@@ -4,7 +4,7 @@ import requests
 
 def get_transaction_info(txid: str) -> dict:
     url = f"https://apilist.tronscan.org/api/transaction-info?hash={txid}"
-    response = requests.get(url)
+    response = requests.get(url, timeout=60)
 
     if response.status_code == 200:
         transaction_data = response.json()
